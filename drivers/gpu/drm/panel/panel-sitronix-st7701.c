@@ -198,6 +198,9 @@ static void st7701_init_sequence(struct st7701 *st7701)
 	const u8 linecount8 = mode->vdisplay / 8;
 	const u8 linecountrem2 = (mode->vdisplay % 8) / 2;
 
+	// debug
+	dev_info(&st7701->dsi->dev, ">>> ST7701: st7701_init_sequence() start <<<\n");
+
 	ST7701_DSI(st7701, MIPI_DCS_SOFT_RESET, 0x00);
 
 	/* We need to wait 5ms before sending new commands */
@@ -305,6 +308,9 @@ static void st7701_init_sequence(struct st7701 *st7701)
 	ST7701_DSI(st7701, DSI_CMD2_BK1_MIPISET1,
 		   DSI_CMD2_BK1_MIPISET1_ONES |
 		   (desc->eot_en ? DSI_CMD2_BK1_MIPISET1_EOT_EN : 0));
+	
+	// debug
+	dev_info(&st7701->dsi->dev, ">>> ST7701: st7701_init_sequence() finished <<<\n");
 }
 
 static void ts8550b_gip_sequence(struct st7701 *st7701)
@@ -404,10 +410,41 @@ static void dmt028vghmcmi_1a_gip_sequence(struct st7701 *st7701)
 	ST7701_DSI(st7701, 0x3A, 0x70);
 }
 
+// MARK: gip sequence. Code by Artix.
+static void d310t9362v1_gip_sequence(struct st7701 *st7701)
+{
+
+	// debug
+	dev_info(&st7701->dsi->dev, ">>> ST7701: d310t9362v1_gip_sequence() start <<<\n");
+
+	ST7701_DSI(st7701, 0xE0, 0x00, 0x00, 0x02);
+	ST7701_DSI(st7701, 0xE1, 0x01, 0xA0, 0x03, 0xA0, 0x02, 0xA0, 0x04,
+		   0xA0, 0x00, 0x44, 0x44);
+	ST7701_DSI(st7701, 0xE2, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		   0x00, 0x00, 0x00, 0x00, 0x00);
+	ST7701_DSI(st7701, 0xE3, 0x00, 0x00, 0x33, 0x33);
+	ST7701_DSI(st7701, 0xE4, 0x44, 0x44);
+	ST7701_DSI(st7701, 0xE5, 0x01, 0x26, 0xA0, 0xA0, 0x03, 0x28, 0xA0,
+		   0xA0, 0x05, 0x2A, 0xA0, 0xA0, 0x07, 0x2C, 0xA0, 0xA0);
+	ST7701_DSI(st7701, 0xE6, 0x00, 0x00, 0x33, 0x33);
+	ST7701_DSI(st7701, 0xE7, 0x44, 0x44);
+	ST7701_DSI(st7701, 0xE8, 0x02, 0x26, 0xA0, 0xA0, 0x04, 0x28, 0xA0,
+		   0xA0, 0x06, 0x2A, 0xA0, 0xA0, 0x08, 0x2C, 0xA0, 0xA0);
+	ST7701_DSI(st7701, 0xEB, 0x00, 0x01, 0xE4, 0xE4, 0x44, 0x00, 0x40);
+	ST7701_DSI(st7701, 0xED, 0xFF, 0xF7, 0x65, 0x4F, 0x0B, 0xA1, 0xCF,
+		   0xFF, 0xFF, 0xFC, 0x1A, 0xB0, 0xF4, 0x56, 0x7F, 0xFF);
+	
+	// debug
+	dev_info(&st7701->dsi->dev, ">>> ST7701: d310t9362v1_gip_sequence() finished <<<\n");
+}
+
 static int st7701_prepare(struct drm_panel *panel)
 {
 	struct st7701 *st7701 = panel_to_st7701(panel);
 	int ret;
+
+	// debug
+	dev_info(&st7701->dsi->dev, ">>> ST7701: st7701_prepare() called <<<\n");
 
 	gpiod_set_value(st7701->reset, 0);
 
@@ -435,6 +472,9 @@ static int st7701_prepare(struct drm_panel *panel)
 static int st7701_enable(struct drm_panel *panel)
 {
 	struct st7701 *st7701 = panel_to_st7701(panel);
+
+	// debug
+	dev_info(&st7701->dsi->dev, ">>> ST7701: st7701_enable() called <<<\n");
 
 	ST7701_DSI(st7701, MIPI_DCS_SET_DISPLAY_ON, 0x00);
 
@@ -482,6 +522,9 @@ static int st7701_get_modes(struct drm_panel *panel,
 	struct st7701 *st7701 = panel_to_st7701(panel);
 	const struct drm_display_mode *desc_mode = st7701->desc->mode;
 	struct drm_display_mode *mode;
+
+	// debug
+	dev_info(&st7701->dsi->dev, ">>> ST7701: st7701_get_modes() called <<<\n");
 
 	mode = drm_mode_duplicate(connector->dev, desc_mode);
 	if (!mode) {
@@ -708,8 +751,77 @@ static const struct st7701_panel_desc dmt028vghmcmi_1a_desc = {
 	.gip_sequence = dmt028vghmcmi_1a_gip_sequence,
 };
 
+
+// MARK: mode. Code by Artix.
+static const struct drm_display_mode d310t9362v1_mode = {
+	
+	.clock		= 31530,
+
+	.hdisplay	= 480, // checked
+	.hsync_start	= 480 + 60, // no use
+	.hsync_end	= 480 + 60 + 60, // no use
+	.htotal		= 640, // checked
+
+	.vdisplay	= 800, // checked
+	.vsync_start	= 800 + 2, // checked
+	.vsync_end	= 800 + 2 + 10, // not sure
+	.vtotal		= 800 + 2 + 10 + 9, // checked 9
+
+	.width_mm	= 41, // checked
+	.height_mm	= 68, // checked
+
+	// .clock		= 30816,
+
+	// .hdisplay	= 480,
+	// .hsync_start	= 480 + 50,
+	// .hsync_end	= 480 + 50 + 10,
+	// .htotal		= 480 + 50 + 10 + 60,
+
+	// .vdisplay	= 800,
+	// .vsync_start	= 800 + 20,
+	// .vsync_end	= 800 + 20 + 2,
+	// .vtotal		= 800 + 20 + 2 + 34,
+
+	// .width_mm	= 41, // checked
+	// .height_mm	= 68, // checked
+
+	// .flags = DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC,
+
+	.type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED,
+};
+
+// MARK: desc. Code by Artix.
+static const struct st7701_panel_desc d310t9362v1_desc = {
+	.mode = &d310t9362v1_mode,
+	.lanes = 2,
+	.format = MIPI_DSI_FMT_RGB888,
+	.panel_sleep_delay = 120,
+
+	.pv_gamma = { 0x00, 0x11, 0x19, 0x0C, 0x10, 0x06, 0x07, 0x0A, 0x09,
+			0x22, 0x04, 0x10, 0x0E, 0x28, 0x30, 0x1C }, //checked
+	.nv_gamma = { 0x00, 0x12, 0x19, 0x0D, 0x10, 0x04, 0x06, 0x07, 0x08,
+			0x23, 0x04, 0x12, 0x11, 0x28, 0x30, 0x1C }, //checked
+	
+	.nlinv = 7, //checked
+	.vop_uv = 4500000, //checked
+	.vcom_uv = 1300000, //checked
+	.vgh_mv = 15000, //checked
+	.vgl_mv = -9510, // checked
+	.avdd_mv = 6600, //checked
+	.avcl_mv = -4600, //checked
+	.gamma_op_bias = OP_BIAS_MIDDLE, //checked
+	.input_op_bias = OP_BIAS_MIDDLE, //checked
+	.output_op_bias = OP_BIAS_MIDDLE, //checked
+	.t2d_ns = 1600, //checked
+	.t3d_ns = 10400, //checked
+	.eot_en = true, //checked
+	.gip_sequence = d310t9362v1_gip_sequence,
+};
+
 static int st7701_dsi_probe(struct mipi_dsi_device *dsi)
 {
+	// debug
+	dev_info(&dsi->dev, ">>> ST7701: st7701_dsi_probe() start <<<\n");
 	const struct st7701_panel_desc *desc;
 	struct st7701 *st7701;
 	int ret;
@@ -719,6 +831,15 @@ static int st7701_dsi_probe(struct mipi_dsi_device *dsi)
 		return -ENOMEM;
 
 	desc = of_device_get_match_data(&dsi->dev);
+
+	// debug ↓
+	if (!desc) {
+		dev_err(&dsi->dev, ">>> ST7701: of_device_get_match_data() failed <<<\n");
+		return -ENODEV;
+	}
+	dev_info(&dsi->dev, ">>> ST7701: of_device_get_match_data() OK <<<\n");
+	// debug ↑
+
 	dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_BURST |
 			  MIPI_DSI_MODE_LPM | MIPI_DSI_CLOCK_NON_CONTINUOUS;
 	dsi->format = desc->format;
@@ -738,9 +859,14 @@ static int st7701_dsi_probe(struct mipi_dsi_device *dsi)
 		return PTR_ERR(st7701->reset);
 	}
 
+	// debug
+	dev_info(&dsi->dev, ">>> ST7701: drm_panel_init() start <<<\n");
+
 	drm_panel_init(&st7701->panel, &dsi->dev, &st7701_funcs,
 		       DRM_MODE_CONNECTOR_DSI);
 
+	// debug
+	dev_info(&dsi->dev, ">>> ST7701: drm_panel_init() finished <<<\n");
 	/**
 	 * Once sleep out has been issued, ST7701 IC required to wait 120ms
 	 * before initiating new commands.
@@ -753,23 +879,50 @@ static int st7701_dsi_probe(struct mipi_dsi_device *dsi)
 	st7701->sleep_delay = 120 + desc->panel_sleep_delay;
 
 	ret = drm_panel_of_backlight(&st7701->panel);
-	if (ret)
+	if (ret) {
+
+		// debug
+		dev_err(&dsi->dev, ">>> ST7701: drm_panel_of_backlight() failed: %d <<<\n", ret);
+
 		return ret;
+	}
+
+	// debug
+	dev_info(&dsi->dev, ">>> ST7701: drm_panel_of_backlight() finished <<<\n");
 
 	drm_panel_add(&st7701->panel);
+
+	// debug
+	dev_info(&dsi->dev, ">>> ST7701: drm_panel_add() finished <<<\n");
 
 	mipi_dsi_set_drvdata(dsi, st7701);
 	st7701->dsi = dsi;
 	st7701->desc = desc;
 
+	// debug
+	dev_info(&dsi->dev, ">>> ST7701: mipi_dsi_set_drvdata() finished <<<\n");
+
 	ret = mipi_dsi_attach(dsi);
-	if (ret)
+
+	if (ret) {
+
+		// debug
+		dev_err(&dsi->dev, ">>> ST7701: mipi_dsi_attach() failed: %d <<<\n", ret);
+
 		goto err_attach;
+	}
+
+	// debug
+	dev_info(&dsi->dev, ">>> ST7701: mipi_dsi_attach() finished <<<\n");
 
 	return 0;
 
 err_attach:
 	drm_panel_remove(&st7701->panel);
+
+	// debug
+	dev_info(&dsi->dev, ">>> ST7701: Error when attaching <<<\n");
+
 	return ret;
 }
 
@@ -784,8 +937,10 @@ static void st7701_dsi_remove(struct mipi_dsi_device *dsi)
 static const struct of_device_id st7701_of_match[] = {
 	{ .compatible = "densitron,dmt028vghmcmi-1a", .data = &dmt028vghmcmi_1a_desc },
 	{ .compatible = "techstar,ts8550b", .data = &ts8550b_desc },
-	{ }
+	{ .compatible = "daxian,d310t9362v1", .data = &d310t9362v1_desc },
+	{ },
 };
+
 MODULE_DEVICE_TABLE(of, st7701_of_match);
 
 static struct mipi_dsi_driver st7701_dsi_driver = {

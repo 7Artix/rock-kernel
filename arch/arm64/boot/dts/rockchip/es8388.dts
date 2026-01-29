@@ -1,0 +1,109 @@
+/dts-v1/;
+/plugin/;
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/clock/rk3568-cru.h>
+
+/ {
+    metadata {
+        title = "ES8388 I2S sound";
+        compatible = "radxa,rock-3c-aic8800ds2", "radxa,rock-3c", "rockchip,rk3566";
+        category = "audio";
+        description = "ES8388 I2S sound";
+        exclusive = "i2s3_2ch";
+    };
+
+    fragment@0 {
+        target = <&i2s3_2ch>;
+        __overlay__ {
+            status = "okay";
+        };
+    };
+
+    fragment@1 {
+        target = <&i2c3>;
+        __overlay__ {
+            status = "okay";
+            clock-frequency = <400000>;
+            #address-cells = <0x01>;
+			#size-cells = <0x00>;
+
+            es8388: es8388@10 {
+                power-on-delay = <50>;
+                status = "okay";
+                #sound-dai-cells = <0>;
+                compatible = "everest,es8388";
+                reg = <0x10>;
+                DVDD-supply = <&vcc_3v3>;
+                AVDD-supply = <&vcc_3v3>;
+                PVDD-supply = <&vcc_3v3>;
+                HPVDD-supply = <&vcc_3v3>;
+                clocks = <&cru I2S3_MCLKOUT>;
+                clock-names = "mclk";
+                assigned-clocks = <&cru I2S3_MCLKOUT>, <&cru I2S3_MCLK_IOE>;
+                assigned-clock-rates = <12288000>;
+                assigned-clock-parents = <&cru I2S3_MCLKOUT_TX>, <&cru I2S3_MCLKOUT>;
+                pinctrl-names = "default";
+                pinctrl-0 = <&i2s3m0_mclk>;
+            };
+        };
+    };
+
+    fragment@2 {
+        target-path = "/";
+        __overlay__ {
+            es8388_sound: es8388-sound {
+                status = "okay";
+                compatible = "rockchip,multicodecs-card";
+                rockchip,card-name = "ES8388";
+                rockchip,format = "i2s";
+                rockchip,mclk-fs = <256>;
+                rockchip,pre-power-on-delay-ms = <30>;
+                rockchip,post-power-down-delay-ms = <40>;
+                rockchip,cpu = <&i2s3_2ch>;
+                rockchip,codec = <&es8388>;
+                rockchip,audio-routing = 
+                    /* Differential Output */
+                    "Left DAC", "Playback",
+                    "Right DAC", "Playback",
+                    
+                    "Left Out 1","Left DAC",
+                    "Left Out 2","Left DAC",
+                    "Right Out 1","Right DAC",
+                    "Right Out 2","Right DAC",
+
+                    "LOUT1", "Left Out 1",
+                    "LOUT2", "Left Out 2",
+                    "ROUT1", "Right Out 1",
+                    "ROUT2", "Right Out 2",
+
+                    /* Differential Input */
+                    "Capture", "Left ADC",
+                    "Left ADC", "Left ADC Mux",
+                    "Left ADC Mux", "Left PGA Mux",
+                    "Left PGA Mux", "Differential Mux",
+
+                    "Capture", "Right ADC",
+                    "Right ADC", "Right ADC Mux",
+                    "Right ADC Mux", "Right PGA Mux",
+                    "Right PGA Mux", "Differential Mux",
+
+                    "Differential Mux","LINPUT1",
+                    "Differential Mux","RINPUT1",
+                    // "LINPUT1","Mic Bias",
+                    // "RINPUT1","Mic Bias",
+                    // "Mic Bias","Mic Bias Gen",
+
+                    // "LINPUT2", "Main Mic",
+                    // "RINPUT2", "Main Mic",
+
+                    // ADC Power Supply
+                    "Left ADC", "ADC DIG", // ADC Digital
+                    "Right ADC", "ADC DIG",
+                    "ADC DIG", "ADC STM", // System Timing Module
+                    "ADC DIG", "ADC Vref", // Reference Voltage
+                    "ADC DIG", "ADC DLL"; // Delay Locked Loop
+            };
+        };
+    };
+};

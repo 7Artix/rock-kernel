@@ -1,0 +1,32 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+    metadata {
+        title = "SSD1306 Display Screen";
+        compatible = "radxa,rock-3c-aic8800ds2", "radxa,rock-3c", "rockchip,rk3566";
+        category = "screen";
+        description = "SSD1306 Display Screen";
+    };
+
+    fragment@0 {
+        target = <&i2c3>;
+        __overlay__ {
+            status = "okay";
+            clock-frequency = <400000>;
+            #address-cells = <0x01>;
+			#size-cells = <0x00>;
+
+            ssd1306: ssd1306@3c {
+                compatible = "solomon,ssd1306";
+                reg = <0x3c>;
+                vcc-supply = <&vcc_3v3>;
+                solomon,width = <128>;
+                solomon,height = <64>;
+                solomon,page-offset = <0>;
+                solomon,segment-no-remap;
+                // solomon,com-lrremap;
+            };
+        };
+    };
+};

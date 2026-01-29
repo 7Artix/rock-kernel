@@ -721,6 +721,9 @@ static void dw_mipi_dsi2_lp2hs_or_hs2lp_cfg(struct dw_mipi_dsi2 *dsi2)
 
 static void dw_mipi_dsi2_phy_init(struct dw_mipi_dsi2 *dsi2)
 {
+	// debug
+	dev_err(dsi2->dev, "DRM_DEBUG: %s: called.\n", __func__);
+
 	dw_mipi_dsi2_phy_mode_cfg(dsi2);
 	dw_mipi_dsi2_phy_clk_mode_cfg(dsi2);
 
@@ -971,6 +974,12 @@ static int dw_mipi_dsi2_encoder_mode_set(struct dw_mipi_dsi2 *dsi2,
 	const struct drm_display_mode *adjusted_mode;
 	struct drm_display_mode *mode = &dsi2->mode;
 
+	// debug
+	pr_err("DRM_DEBUG: %s: called.\n", __func__);
+
+	// debug
+	dev_err(dsi2->dev, "DRM_DEBUG: %s: called.\n", __func__);
+
 	connector = drm_atomic_get_new_connector_for_encoder(state, encoder);
 	if (!connector)
 		return -ENODEV;
@@ -1008,6 +1017,9 @@ static void dw_mipi_dsi2_encoder_atomic_enable(struct drm_encoder *encoder,
 	struct drm_crtc_state *old_crtc_state = NULL;
 	int ret;
 
+	// debug
+	dev_err(dsi2->dev, "DRM_DEBUG: %s: called.\n", __func__);
+
 	crtc = dw_mipi_dsi2_get_new_crtc(dsi2, state);
 	if (crtc)
 		old_crtc_state = drm_atomic_get_old_crtc_state(state, crtc);
@@ -1018,6 +1030,7 @@ static void dw_mipi_dsi2_encoder_atomic_enable(struct drm_encoder *encoder,
 	}
 
 	ret = dw_mipi_dsi2_encoder_mode_set(dsi2, state);
+
 	if (ret) {
 		dev_err(dsi2->dev, "failed to set dsi2 mode\n");
 		return;
@@ -1064,10 +1077,16 @@ dw_mipi_dsi2_encoder_atomic_check(struct drm_encoder *encoder,
 				  struct drm_connector_state *conn_state)
 {
 
+	// debug
+	pr_err("DRM_DEBUG: %s: called.\n", __func__);
+
 	struct rockchip_crtc_state *s = to_rockchip_crtc_state(crtc_state);
 	struct dw_mipi_dsi2 *dsi2 = encoder_to_dsi2(encoder);
 	struct drm_connector *connector = conn_state->connector;
 	struct drm_display_info *info = &connector->display_info;
+
+	// debug
+	dev_err(dsi2->dev, "DRM_DEBUG: %s: called.\n", __func__);
 
 	switch (dsi2->format) {
 	case MIPI_DSI_FMT_RGB888:
@@ -1691,6 +1710,9 @@ static int dw_mipi_dsi2_host_attach(struct mipi_dsi_host *host,
 	struct dw_mipi_dsi2 *dsi2 = host_to_dsi2(host);
 	int ret;
 
+	// debug
+	dev_err(dsi2->dev, "DRM_DEBUG: %s: called.\n", __func__);
+
 	if (dsi2->master)
 		return 0;
 
@@ -1728,6 +1750,9 @@ static int dw_mipi_dsi2_host_detach(struct mipi_dsi_host *host,
 				   struct mipi_dsi_device *device)
 {
 	struct dw_mipi_dsi2 *dsi2 = host_to_dsi2(host);
+
+	// debug
+	dev_err(dsi2->dev, "DRM_DEBUG: %s: called.\n", __func__);
 
 	if (dsi2->master)
 		return 0;
@@ -1852,6 +1877,9 @@ static ssize_t dw_mipi_dsi2_host_transfer(struct mipi_dsi_host *host,
 					 const struct mipi_dsi_msg *msg)
 {
 	struct dw_mipi_dsi2 *dsi2 = host_to_dsi2(host);
+
+	// debug
+	dev_err(dsi2->dev, "DRM_DEBUG: %s: called.\n", __func__);
 
 	return dw_mipi_dsi2_transfer(dsi2, msg);
 }

@@ -1,0 +1,17 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+    metadata {
+        title = "I2C3 Enable";
+        compatible = "radxa,rock-3c-aic8800ds2", "radxa,rock-3c", "rockchip,rk3566";
+    };
+
+    fragment@1 {
+        target = <&i2c3>;
+        __overlay__ {
+            status = "okay";
+            clock-frequency = <400000>;
+        };
+    };
+};

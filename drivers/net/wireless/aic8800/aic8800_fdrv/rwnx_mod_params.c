@@ -1727,7 +1727,6 @@ void rwnx_custregd(struct rwnx_hw *rwnx_hw, struct wiphy *wiphy)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 0, 0)
     if (!rwnx_hw->mod_params->custregd)
         return;
-
 #ifdef REGULATORY_IGNORE_STALE_KICKOFF
     wiphy->regulatory_flags |= REGULATORY_IGNORE_STALE_KICKOFF;
 #endif

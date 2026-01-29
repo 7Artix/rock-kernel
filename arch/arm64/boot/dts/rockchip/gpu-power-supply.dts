@@ -1,0 +1,29 @@
+/dts-v1/;
+/plugin/;
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/pinctrl/rockchip.h>
+#include <dt-bindings/display/rockchip_vop.h>
+
+/ {
+    metadata {
+        title = "Mali Enable Panfrost";
+        compatible = "radxa,rock-3c-aic8800ds2", "radxa,rock-3c", "rockchip,rk3566";
+        category = "gpu";
+        description = "Enable Mali G52 using Panfrost";
+    };
+
+    fragment@0 {
+        target = <&power>;
+        __overlay__ {
+            gpu-supply = <&vdd_gpu>;
+        };
+    };
+
+    fragment@1 {
+        target = <&gpu>;
+        __overlay__ {
+            mem-supply = <&vdd_gpu>;
+        };
+    };
+};

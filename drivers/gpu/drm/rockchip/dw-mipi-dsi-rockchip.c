@@ -317,6 +317,8 @@ struct dw_mipi_dsi_rockchip {
 
 	/* dual-channel */
 	bool is_slave;
+	bool is_dsi0;
+	struct dw_mipi_dsi_rockchip *dsi0;
 	struct dw_mipi_dsi_rockchip *slave;
 	bool data_swap;
 
@@ -485,6 +487,9 @@ static int dw_mipi_dsi_phy_init(void *priv_data)
 	struct dw_mipi_dsi_rockchip *dsi = priv_data;
 	int i, vco;
 
+	// debug
+	dev_err(dsi->dev, "DRM_DEBUG: %s: called.\n", __func__);
+
 	dw_mipi_dsi_phy_tx_config(dsi);
 
 	if (dsi->phy)
@@ -594,6 +599,9 @@ static void dw_mipi_dsi_phy_power_on(void *priv_data)
 {
 	struct dw_mipi_dsi_rockchip *dsi = priv_data;
 
+	// debug
+	dev_err(dsi->dev, "DRM_DEBUG: %s: called.\n", __func__);
+
 	if (dsi->phy_enabled)
 		return;
 
@@ -621,6 +629,9 @@ static unsigned int dw_mipi_dsi_calculate_lane_mpbs(struct dw_mipi_dsi_rockchip 
 	unsigned int max_mbps;
 	unsigned int value;
 	unsigned long mpclk, tmp;
+
+	// debug
+	dev_err(dsi->dev, "DRM_DEBUG: %s: called.\n", __func__);
 
 	if (dsi->is_slave)
 		return dsi->lane_mbps;
@@ -666,6 +677,9 @@ dw_mipi_dsi_get_lane_mbps(void *priv_data, const struct drm_display_mode *mode,
 	unsigned long target_pclk, hs_clk_rate;
 	unsigned int target_mbps;
 	int bpp, ret;
+
+	// debug
+	dev_err(dsi->dev, "DRM_DEBUG: %s: called.\n", __func__);
 
 	dsi->format = format;
 	bpp = mipi_dsi_pixel_format_to_bpp(dsi->format);
@@ -782,6 +796,9 @@ static void dw_mipi_dsi_rockchip_vop_routing(struct dw_mipi_dsi_rockchip *dsi)
 {
 	int mux;
 
+	// debug
+	dev_err(dsi->dev, "DRM_DEBUG: %s: called.\n", __func__);
+
 	mux = drm_of_encoder_active_endpoint_id(dsi->dev->of_node,
 						&dsi->encoder);
 	if (mux < 0)
@@ -808,6 +825,9 @@ dw_mipi_dsi_encoder_atomic_check(struct drm_encoder *encoder,
 	struct dw_mipi_dsi_rockchip *dsi = to_dsi(encoder);
 	struct drm_connector *connector = conn_state->connector;
 	struct drm_display_info *info = &connector->display_info;
+
+	// debug
+	dev_err(dsi->dev, "DRM_DEBUG: %s: called.\n", __func__);
 
 	switch (dsi->format) {
 	case MIPI_DSI_FMT_RGB888:
@@ -872,7 +892,14 @@ dw_mipi_dsi_encoder_atomic_check(struct drm_encoder *encoder,
 
 static void dw_mipi_dsi_encoder_enable(struct drm_encoder *encoder)
 {
+
+	// debug
+	pr_err("DRM_DEBUG: %s: called.\n", __func__);
+
 	struct dw_mipi_dsi_rockchip *dsi = to_dsi(encoder);
+
+	// debug
+	dev_err(dsi->dev, "DRM_DEBUG: %s: called.\n", __func__);
 
 	dw_mipi_dsi_rockchip_vop_routing(dsi);
 }
@@ -883,6 +910,9 @@ static void dw_mipi_dsi_encoder_disable(struct drm_encoder *encoder)
 
 static void dw_mipi_dsi_rockchip_loader_protect(struct dw_mipi_dsi_rockchip *dsi, bool on)
 {
+	if (dsi->dsi0)
+		dw_mipi_dsi_rockchip_loader_protect(dsi->dsi0, on);
+
 	if (on) {
 		pm_runtime_get_sync(dsi->dev);
 		phy_init(dsi->phy);
@@ -926,6 +956,9 @@ static int rockchip_dsi_drm_create_encoder(struct dw_mipi_dsi_rockchip *dsi,
 {
 	struct drm_encoder *encoder = &dsi->encoder;
 	int ret;
+
+	// debug
+	dev_err(dsi->dev, "DRM_DEBUG: %s: called.\n", __func__);
 
 	encoder->possible_crtcs = rockchip_drm_of_find_possible_crtcs(drm_dev,
 								      dsi->dev->of_node);
@@ -981,6 +1014,31 @@ static struct device
 			return ERR_PTR(-EPROBE_DEFER);
 
 		return slave->dev;
+	}
+
+	return NULL;
+}
+
+static struct device
+*dw_mipi_dsi_rockchip_find_dsi0(struct dw_mipi_dsi_rockchip *dsi)
+{
+	struct device_node *node = NULL;
+	struct platform_device *pdev;
+	struct dw_mipi_dsi_rockchip *dsi2;
+
+	node = of_parse_phandle(dsi->dev->of_node, "rockchip,dsi-dsi0", 0);
+	if (node) {
+		pdev = of_find_device_by_node(node);
+		if (!pdev)
+			return ERR_PTR(-EPROBE_DEFER);
+
+		dsi2 = platform_get_drvdata(pdev);
+		if (!dsi2) {
+			platform_device_put(pdev);
+			return ERR_PTR(-EPROBE_DEFER);
+		}
+
+		return &pdev->dev;
 	}
 
 	return NULL;
@@ -1059,6 +1117,9 @@ static int dw_mipi_dsi_rockchip_bind(struct device *dev,
 	struct device *second;
 	int ret;
 
+	// debug
+	dev_err(dsi->dev, "DRM_DEBUG: %s: called.\n", __func__);
+
 	second = dw_mipi_dsi_rockchip_find_second(dsi);
 	if (IS_ERR(second))
 		return PTR_ERR(second);
@@ -1075,6 +1136,27 @@ static int dw_mipi_dsi_rockchip_bind(struct device *dev,
 		dw_mipi_dsi_set_slave(dsi->dmd, dsi->slave->dmd);
 		put_device(second);
 	}
+	if(!second){
+		second = dw_mipi_dsi_rockchip_find_dsi0(dsi);
+		if (IS_ERR(second))
+			return PTR_ERR(second);
+
+		if (second) {
+			/* we are the slave in dual-DSI */
+			dsi->dsi0 = dev_get_drvdata(second);
+			if (!dsi->dsi0) {
+				DRM_DEV_ERROR(dev, "could not get dsi0 data\n");
+				return -ENODEV;
+			}
+
+			dsi->dsi0->is_dsi0 = true;
+			dw_mipi_dsi_set_dsi0(dsi->dmd, dsi->dsi0->dmd);
+			put_device(second);
+		} else
+			dsi->is_dsi0 = of_property_read_bool(dev->of_node, "dsi1-only");
+	}
+	if (dsi->is_dsi0)
+		return 0;
 
 	if (dsi->is_slave)
 		return 0;
@@ -1123,6 +1205,8 @@ static void dw_mipi_dsi_rockchip_unbind(struct device *dev,
 {
 	struct dw_mipi_dsi_rockchip *dsi = dev_get_drvdata(dev);
 
+	if (dsi->is_dsi0)
+		return;
 	if (dsi->is_slave)
 		return;
 
@@ -1142,6 +1226,9 @@ static const struct component_ops dw_mipi_dsi_rockchip_ops = {
 static int dw_mipi_dsi_rockchip_component_add(struct dw_mipi_dsi_rockchip *dsi)
 {
 	int ret;
+
+	// debug
+	dev_err(dsi->dev, "DRM_DEBUG: %s: called.\n", __func__);
 
 	mutex_lock(&dsi->usage_mutex);
 
@@ -1211,6 +1298,9 @@ static int dw_mipi_dsi_dphy_init(struct phy *phy)
 	struct dw_mipi_dsi_rockchip *dsi = phy_get_drvdata(phy);
 	int ret;
 
+	// debug
+	dev_err(dsi->dev, "DRM_DEBUG: %s: called.\n", __func__);
+
 	mutex_lock(&dsi->usage_mutex);
 
 	if (dsi->usage_mode != DW_DSI_USAGE_IDLE) {
@@ -1274,6 +1364,9 @@ static int dw_mipi_dsi_dphy_configure(struct phy *phy, union phy_configure_opts 
 	struct phy_configure_opts_mipi_dphy *config = &opts->mipi_dphy;
 	struct dw_mipi_dsi_rockchip *dsi = phy_get_drvdata(phy);
 	int ret;
+
+	// debug
+	dev_err(dsi->dev, "DRM_DEBUG: %s: called.\n", __func__);
 
 	ret = phy_mipi_dphy_config_validate(&opts->mipi_dphy);
 	if (ret)
@@ -1415,6 +1508,9 @@ static int dw_mipi_dsi_rockchip_probe(struct platform_device *pdev)
 	const struct rockchip_dw_dsi_chip_data *cdata =
 				of_device_get_match_data(dev);
 	int ret, i;
+
+	// debug
+	dev_err(dev, "DRM_DEBUG: %s: called.\n", __func__);
 
 	dsi = devm_kzalloc(dev, sizeof(*dsi), GFP_KERNEL);
 	if (!dsi)
@@ -1559,6 +1655,8 @@ static int dw_mipi_dsi_rockchip_remove(struct platform_device *pdev)
 {
 	struct dw_mipi_dsi_rockchip *dsi = platform_get_drvdata(pdev);
 
+	// debug
+	dev_err(dsi->dev, "DRM_DEBUG: %s: called.\n", __func__);
 
 	dw_mipi_dsi_rockchip_component_del(dsi);
 	dw_mipi_dsi_remove(dsi->dmd);

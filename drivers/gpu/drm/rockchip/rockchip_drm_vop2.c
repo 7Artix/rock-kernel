@@ -3692,6 +3692,9 @@ static int vop2_wb_encoder_atomic_check(struct drm_encoder *encoder,
 	struct drm_gem_object *obj, *uv_obj;
 	struct rockchip_gem_object *rk_obj, *rk_uv_obj;
 
+	// debug
+	dev_err(vp->vop2->dev, "DRM_DEBUG: %s: called.\n", __func__);
+
 	/*
 	 * No need for a full modested when the only connector changed is the
 	 * writeback connector.
@@ -3762,6 +3765,9 @@ static void vop2_wb_encoder_atomic_disable(struct drm_encoder *encoder,
 {
 	struct drm_crtc *crtc = encoder->crtc;
 	struct vop2_video_port *vp = to_vop2_video_port(crtc);
+
+	// debug
+	dev_err(vp->vop2->dev, "DRM_DEBUG: %s: called.\n", __func__);
 
 	if (!crtc->state->active_changed && !crtc->state->mode_changed) {
 		crtc->state->connectors_changed = false;
@@ -5565,6 +5571,9 @@ static void vop2_crtc_atomic_disable(struct drm_crtc *crtc,
 	bool dual_channel = !!(vcstate->output_flags & ROCKCHIP_OUTPUT_DUAL_CHANNEL_LEFT_RIGHT_MODE);
 	int ret;
 
+	// debug
+	dev_err(vp->vop2->dev, "DRM_DEBUG: %s: called.\n", __func__);
+
 	WARN_ON(vp->event);
 
 	if (crtc->state->self_refresh_active) {
@@ -6043,6 +6052,9 @@ static int vop2_plane_atomic_check(struct drm_plane *plane, struct drm_atomic_st
 	dma_addr_t dma_addr;
 	int ret;
 
+	// debug
+	dev_err(vop2->dev, "DRM_DEBUG: %s: called.\n", __func__);
+
 	crtc = crtc ? crtc : plane->state->crtc;
 	if (!crtc || !fb) {
 		plane->state->visible = false;
@@ -6269,6 +6281,9 @@ static void vop2_plane_atomic_disable(struct drm_plane *plane, struct drm_atomic
 	struct drm_plane_state *pstate;
 	struct drm_crtc *crtc;
 	struct vop2_video_port *vp;
+
+	// debug
+	dev_err(vop2->dev, "DRM_DEBUG: %s: called.\n", __func__);
 
 	rockchip_drm_dbg(vop2->dev, VOP_DEBUG_PLANE, "%s disable %s",
 			 win->name, current->comm);
@@ -9854,6 +9869,9 @@ static void vop2_crtc_atomic_enable(struct drm_crtc *crtc, struct drm_atomic_sta
 	int ret;
 	char *output_if_string;
 
+	// debug
+	dev_err(vop2->dev, "DRM_DEBUG: %s: called.\n", __func__);
+
 	if (old_cstate && old_cstate->self_refresh_active) {
 		vop2_crtc_atomic_exit_psr(crtc, old_cstate);
 
@@ -10456,6 +10474,9 @@ static int vop2_crtc_atomic_check(struct drm_crtc *crtc,
 	struct rockchip_crtc_state *old_vcstate = to_rockchip_crtc_state(old_crtc_state);
 	struct drm_display_mode *adjusted_mode = &crtc->state->adjusted_mode;
 	bool hdr_ext_data_change;
+
+	// debug
+	dev_err(vop2->dev, "DRM_DEBUG: %s: called.\n", __func__);
 
 	if (vop2_has_feature(vop2, VOP_FEATURE_SPLICE)) {
 		if (adjusted_mode->hdisplay > VOP2_MAX_VP_OUTPUT_WIDTH) {

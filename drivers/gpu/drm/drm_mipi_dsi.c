@@ -49,6 +49,10 @@
 
 static int mipi_dsi_device_match(struct device *dev, struct device_driver *drv)
 {
+
+	// debug
+	dev_err(dev, "DRM_DEBUG: %s: called.\n", __func__);
+
 	struct mipi_dsi_device *dsi = to_mipi_dsi_device(dev);
 
 	/* attempt OF style match */
@@ -145,6 +149,11 @@ static struct mipi_dsi_device *mipi_dsi_device_alloc(struct mipi_dsi_host *host)
 
 static int mipi_dsi_device_add(struct mipi_dsi_device *dsi)
 {
+
+	// debug
+	dev_err(&dsi->dev, "DRM_DEBUG: %s: called.\n", __func__);
+
+
 	struct mipi_dsi_host *host = dsi->host;
 
 	dev_set_name(&dsi->dev, "%s.%d", dev_name(host->dev),  dsi->channel);
@@ -215,6 +224,10 @@ mipi_dsi_device_register_full(struct mipi_dsi_host *host,
 	}
 
 	dsi = mipi_dsi_device_alloc(host);
+
+	// debug
+	dev_err(&dsi->dev, "DRM_DEBUG: %s: called.\n", __func__);
+
 	if (IS_ERR(dsi)) {
 		drm_err(host, "failed to allocate DSI device %ld\n",
 			PTR_ERR(dsi));
@@ -275,6 +288,9 @@ devm_mipi_dsi_device_register_full(struct device *dev,
 				   struct mipi_dsi_host *host,
 				   const struct mipi_dsi_device_info *info)
 {
+	// debug
+	dev_err(dev, "DRM_DEBUG: %s: called.\n", __func__);
+
 	struct mipi_dsi_device *dsi;
 	int ret;
 
@@ -325,6 +341,9 @@ EXPORT_SYMBOL(of_find_mipi_dsi_host_by_node);
 
 int mipi_dsi_host_register(struct mipi_dsi_host *host)
 {
+	// debug
+	dev_err(host->dev, "DRM_DEBUG: %s: called.\n", __func__);
+
 	struct device_node *node;
 
 	for_each_available_child_of_node(host->dev->of_node, node) {
@@ -369,6 +388,9 @@ EXPORT_SYMBOL(mipi_dsi_host_unregister);
  */
 int mipi_dsi_attach(struct mipi_dsi_device *dsi)
 {
+	// debug
+	dev_err(&dsi->dev, "DRM_DEBUG: %s: called.\n", __func__);
+
 	const struct mipi_dsi_host_ops *ops = dsi->host->ops;
 	int ret;
 
@@ -426,6 +448,9 @@ static void devm_mipi_dsi_detach(void *arg)
 int devm_mipi_dsi_attach(struct device *dev,
 			 struct mipi_dsi_device *dsi)
 {
+	// debug
+	dev_err(dev, "DRM_DEBUG: %s: called.\n", __func__);
+
 	int ret;
 
 	ret = mipi_dsi_attach(dsi);
@@ -708,6 +733,9 @@ EXPORT_SYMBOL(mipi_dsi_picture_parameter_set);
 ssize_t mipi_dsi_generic_write(struct mipi_dsi_device *dsi, const void *payload,
 			       size_t size)
 {
+	// debug
+	dev_err(&dsi->dev, "DRM_DEBUG: %s: called.\n", __func__);
+
 	struct mipi_dsi_msg msg = {
 		.channel = dsi->channel,
 		.tx_buf = payload,
@@ -797,6 +825,10 @@ EXPORT_SYMBOL(mipi_dsi_generic_read);
 ssize_t mipi_dsi_dcs_write_buffer(struct mipi_dsi_device *dsi,
 				  const void *data, size_t len)
 {
+
+	// debug
+	dev_err(&dsi->dev, "DRM_DEBUG: %s: called.\n", __func__);
+
 	struct mipi_dsi_msg msg = {
 		.channel = dsi->channel,
 		.tx_buf = data,
